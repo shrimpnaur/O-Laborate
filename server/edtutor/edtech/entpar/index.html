@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel File Parser</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h2,
+        h3 {
+            color: #333;
+        }
+
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Upload an Excel File</h2>
+        <input type="file" id="excelFile" accept=".xlsx, .xls" />
+        <button onclick="handleFile()">Upload & Parse</button>
+
+        <h3>Parsed Data:</h3>
+        <div style="overflow-x: auto;">
+            <table id="excelTable">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function handleFile() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file first!');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheet];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                // Create table headers
+                const thead = document.querySelector('#excelTable thead');
+                thead.innerHTML = `<tr>${jsonData[0].map(header =>
+                    `<th>${header}</th>`).join('')}</tr>`;
+
+                // Create table body
+                const tbody = document.querySelector('#excelTable tbody');
+                tbody.innerHTML = jsonData.slice(1).map(row =>
+                    `<tr>${row.map(cell =>
+                        `<td>${cell || ''}</td>`).join('')}</tr>`
+                ).join('');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    </script>
+</body>
+
+</html>
